@@ -1,4 +1,3 @@
-import models.Box;
 import models.Sudoku;
 import models.Tuple;
 import java.util.*;
@@ -6,8 +5,9 @@ import java.util.*;
 public class SudokuSolver {
 
     private final Sudoku sudoku;
-    private final Map<Box, Map<Tuple, Set<Integer>>> map;
+    private final Map<Tuple, Set<Integer>> map;
     private final Set<Integer> possibleNumbers = new HashSet<>(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9));
+    private boolean debug = false;
 
     public SudokuSolver(Sudoku sudoku) {
         this.sudoku = sudoku;
@@ -16,27 +16,16 @@ public class SudokuSolver {
     }
 
     private void initializeMap() {
-
-        for (Box[] boxRow : sudoku.getSudoku()) {
-            for (Box box : boxRow) {
-                Map<Tuple, Set<Integer>> boxMap = new HashMap<>();
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        boxMap.put(new Tuple(i, j), new HashSet<>(possibleNumbers));
-                    }
-                }
-                map.put(box, boxMap);
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                map.put(new Tuple(i, j), new HashSet<>(possibleNumbers));
             }
         }
         updateLegalMoves();
     }
 
     private void updateLegalMoves() {
-        for (Box[] boxRow : sudoku.getSudoku()) {
-            for (Box box : boxRow) {
-                checkBox(box);
-            }
-        }
+        checkBoxes();
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 checkRow(i);
@@ -45,105 +34,61 @@ public class SudokuSolver {
         }
     }
 
-    private void checkBox(Box box) {
-        Map<Tuple, Set<Integer>> boxMap = map.get(box);
-        Set<Integer> numbersInBox = new HashSet<>();
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (box.elementIsFilled(i, j)) {
-                    numbersInBox.add(box.getElement(i, j));
+    private void checkBoxes() {
+        for (int i = 0; i < 9; i += 3) {
+            for (int j = 0; j < 9; j += 3) {
+                Set<Integer> numbersInBox = new HashSet<>();
+                for (int k = 0; k < 3; k++) {
+                    for (int l = 0; l < 3; l++) {
+                        numbersInBox.add(sudoku.getElement(i + k, j + l));
+                    }
                 }
-            }
-        }
 
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (!box.elementIsFilled(i, j)) {
-                    Set<Integer> options = boxMap.get(new Tuple(i, j));
-                    options.removeAll(numbersInBox);
-                    boxMap.put(new Tuple(i, j), options);
+                for (int k = 0; k < 3; k++) {
+                    for (int l = 0; l < 3; l++) {
+                        if (!sudoku.elementIsFilled(i, j)) {
+                            Tuple tuple = new Tuple(i + k, j + l);
+                            Set<Integer> options = map.get(tuple);
+                            options.removeAll(numbersInBox);
+                            map.put(tuple, options);
+                        }
+                    }
                 }
             }
         }
     }
 
     private void checkRow(int i) {
-        Set<Integer> numbersInBox = new HashSet<>();
-
-        int idx;
-        if (i < 3) {
-            idx = 0;
-        } else if (i < 6) {
-            i -= 3;
-            idx = 1;
-        } else {
-            i -= 6;
-            idx = 2;
+        Set<Integer> numbersInRow = new HashSet<>();
+        for (int j = 0; j < 9; j++) {
+            numbersInRow.add(sudoku.getElement(i, j));
         }
-
-        Box[] boxRow = sudoku.getSudoku()[idx];
-        for (Box box : boxRow) {
-            for (int j = 0; j < 3; j++) {
-                numbersInBox.add(box.getElement(i, j));
-            }
-        }
-
-        for (Box box : boxRow) {
-            Map<Tuple, Set<Integer>> boxMap = map.get(box);
-            for (int j = 0; j < 3; j++) {
-                Set<Integer> options = boxMap.get(new Tuple(i, j));
-                options.removeAll(numbersInBox);
-                boxMap.put(new Tuple(i, j), options);
-            }
+        for (int j = 0; j < 9; j++) {
+            Tuple tuple = new Tuple(i, j);
+            Set<Integer> options = map.get(tuple);
+            options.removeAll(numbersInRow);
+            map.put(tuple, options);
         }
     }
 
     public void checkColumn(int j) {
-        Set<Integer> numbersInBox = new HashSet<>();
-
-        int idx;
-        if (j < 3) {
-            idx = 0;
-        } else if (j < 6) {
-            j -= 3;
-            idx = 1;
-        } else {
-            j -= 6;
-            idx = 2;
+        Set<Integer> numbersInColumn = new HashSet<>();
+        for (int i = 0; i < 9; i++) {
+            numbersInColumn.add(sudoku.getElement(i, j));
         }
-
-        Box[][] boxGrid = sudoku.getSudoku();
-        Box[] boxColumn = new Box[boxGrid.length];
-
-        for (int i = 0; i < boxGrid.length; i++) {
-            boxColumn[i] = boxGrid[i][idx];
-        }
-
-        for (Box box : boxColumn) {
-            for (int i = 0; i < 3; i++) {
-                numbersInBox.add(box.getElement(i, j));
-            }
-        }
-
-        for (Box box : boxColumn) {
-            Map<Tuple, Set<Integer>> boxMap = map.get(box);
-            for (int i = 0; i < 3; i++) {
-                Set<Integer> options = boxMap.get(new Tuple(i, j));
-                options.removeAll(numbersInBox);
-                boxMap.put(new Tuple(i, j), options);
-            }
+        for (int i = 0; i < 9; i++) {
+            Tuple tuple = new Tuple(i, j);
+            Set<Integer> options = map.get(tuple);
+            options.removeAll(numbersInColumn);
+            map.put(tuple, options);
         }
     }
 
     private boolean isSolved() {
-        for (Box[] row : sudoku.getSudoku()) {
-            for (Box box : row) {
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        if (!box.elementIsFilled(i, j)) {
-                            return false;
-                        }
-                    }
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (!sudoku.elementIsFilled(i, j)) {
+                    return false;
                 }
             }
         }
@@ -151,31 +96,144 @@ public class SudokuSolver {
     }
 
     private void fillElements() {
-        for (Box[] row : sudoku.getSudoku()) {
-            for (Box box : row) {
-                Map<Tuple, Set<Integer>> boxMap = map.get(box);
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        if (!box.elementIsFilled(i, j)) {
-                            Set<Integer> options = boxMap.get(new Tuple(i, j));
-                            if (options.size() == 1) {
-                                box.setElement(i, j, (Integer) options.toArray()[0]);
-                            }
-                        }
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (!sudoku.elementIsFilled(i, j)) {
+                    Tuple tuple = new Tuple(i, j);
+                    Set<Integer> options = map.get(tuple);
+                    if (options.size() == 1) {
+                        sudoku.setElement(i, j, (Integer) options.toArray()[0], false, debug);
                     }
                 }
             }
         }
     }
 
-    public void solve(int maxIterations) {
+    private void eliminate() {
+        for (int num : possibleNumbers) {
+            Set<Tuple> eliminated = findEliminated(num);
+            Set<Tuple> freeIndices = findAllEmptySquares();
+            freeIndices.removeAll(eliminated);
+            fillElementsByElimination(freeIndices, num);
+        }
+    }
+
+    private Set<Tuple> findEliminated(int num) {
+        Set<Tuple> eliminated = new HashSet<>();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (sudoku.isElement(i, j, num)) {
+                    for (int k = 0; k < 9; k++) {
+                        if (!sudoku.elementIsFilled(i, k)) {
+                            eliminated.add(new Tuple(i, k));
+                        }
+                        if (!sudoku.elementIsFilled(k, j)) {
+                            eliminated.add(new Tuple(k, j));
+                        }
+                    }
+                    int boxRow = (i - (i % 3));
+                    int boxColumn = (j - (j % 3));
+                    for (int k = boxRow; k < (boxRow + 3); k++) {
+                        for (int l = boxColumn; l < (boxColumn + 3); l++) {
+                            if (!sudoku.elementIsFilled(k, l)) {
+                                eliminated.add(new Tuple(k, l));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return eliminated;
+    }
+
+    private Set<Tuple> findAllEmptySquares() {
+        Set<Tuple> freeIndices = new HashSet<>();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (!sudoku.elementIsFilled(i, j)) {
+                    freeIndices.add(new Tuple(i, j));
+                }
+            }
+        }
+        return freeIndices;
+    }
+
+    private void fillElementsByElimination(Set<Tuple> freeIndices, int num) {
+        Set<Tuple> eliminated = findEliminated(num);
+        for (Tuple t : freeIndices) {
+            boolean row = true;
+            boolean column = true;
+            boolean box = true;
+            for (int k = 0; k < 9; k++) {
+                if (!row && !column) {
+                    break;
+                }
+                if (row) {
+                    if (k != t.getJ()) {
+                        if (sudoku.isElement(t.getI(), k, num)) {
+                            row = false;
+                        }
+                        if (!sudoku.elementIsFilled(t.getI(), k)) {
+                            if (!eliminated.contains(new Tuple(t.getI(), k))) {
+                                row = false;
+                            }
+                        }
+                    }
+                }
+                if (column) {
+                    if (k != t.getI()) {
+                        if (sudoku.isElement(k, t.getJ(), num)) {
+                            column = false;
+                        }
+                        if (!sudoku.elementIsFilled(k, t.getJ())) {
+                            if (!eliminated.contains(new Tuple(k, t.getJ()))) {
+                                column = false;
+                            }
+                        }
+                    }
+                }
+            }
+            int boxRow = (t.getI() - (t.getI() % 3));
+            int boxColumn = (t.getJ() - (t.getJ() % 3));
+            for (int k = boxRow; k < (boxRow + 3); k++) {
+                for (int l = boxColumn; l < (boxColumn + 3); l++) {
+                    if (!box) {
+                        break;
+                    }
+                    if (!(k == t.getI() && t.getJ() == l)) {
+                        if (sudoku.isElement(k, l, num)) {
+                            box = false;
+                        }
+                        if (!sudoku.elementIsFilled(k, l)) {
+                            if (!eliminated.contains(new Tuple(k, l))) {
+                                box = false;
+                            }
+                        }
+                    }
+                }
+            }
+            if (row || column || box) {
+                sudoku.setElement(t.getI(), t.getJ(), num, true, debug);
+                eliminated = findEliminated(num);
+            }
+        }
+    }
+
+    public void solve(int maxIterations, boolean debug) {
+        this.debug = debug;
         for (int i = 0; i < maxIterations; i++) {
             System.out.println(sudoku);
             fillElements();
+            eliminate();
             updateLegalMoves();
+            if (isSolved()) {
+                System.out.println(sudoku);
+                System.out.println("Solved in " + i + " iterations.");
+                break;
+            }
         }
-        System.out.println(sudoku);
-        System.out.println("Solved: " + isSolved());
-
+        if(!isSolved()) {
+            System.out.println("The sudoku is not solvable within the entered amount of iterations.");
+        }
     }
 }

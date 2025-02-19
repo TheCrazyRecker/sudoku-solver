@@ -8,12 +8,15 @@ public class Main {
             Sudoku sudoku = null;
             while (sudoku == null) {
                 System.out.println("Select a difficulty: ");
-                System.out.println("E (Easy) | M (Medium) | H (Hard)");
+                System.out.println("E (Easy) | M (Medium) | H (Hard) | X (Expert) | S (Master) | T (Extreme)");
                 String input = scanner.next();
                 switch (input) {
                     case "e", "E" -> sudoku = Sudoku.easy();
                     case "m", "M" -> sudoku = Sudoku.medium();
                     case "h", "H" -> sudoku = Sudoku.hard();
+                    case "x", "X"-> sudoku = Sudoku.expert();
+                    case "s", "S" -> sudoku = Sudoku.master();
+                    case "t", "T" -> sudoku = Sudoku.extreme();
                     default -> System.out.println("Please select a valid difficulty.");
                 }
             }
@@ -28,8 +31,7 @@ public class Main {
                 }
             }
             SudokuSolver solver = new SudokuSolver(sudoku);
-            solver.solve(iterations);
-
+            solver.solve(iterations, false);
             System.out.println("Would you like to solve another one? (Y/N)");
             String input = scanner.next();
             if(input.equalsIgnoreCase("n")) {
