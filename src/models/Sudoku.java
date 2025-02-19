@@ -1,3 +1,5 @@
+package models;
+
 public class Sudoku {
 
     private Box[][] sudoku;

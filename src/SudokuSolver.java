@@ -1,3 +1,6 @@
+import models.Box;
+import models.Sudoku;
+import models.Tuple;
 import java.util.*;
 
 public class SudokuSolver {

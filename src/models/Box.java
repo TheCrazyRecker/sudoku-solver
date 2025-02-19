@@ -1,3 +1,5 @@
+package models;
+
 public class Box {
 
     private int[][] box;

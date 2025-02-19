@@ -1,3 +1,4 @@
+import models.Sudoku;
 import java.util.Scanner;
 
 public class Main {
